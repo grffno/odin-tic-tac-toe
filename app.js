@@ -1,47 +1,45 @@
-const playerFactory = (mark) => {
-    return { mark };
-}
-
 const gameBoard = (() => {
-
-    // Create an array representing the game board
     const board = Array(9).fill('');
 
     const getBoard = () => board;
 
-    // Create a function that takes a cell number and player name
-    // and places a mark in the chosen cell
-    const addMark = (cell, mark) => {
-        board[cell] = mark;
-    };
+    const addMark = (cell, mark) => board[cell] = mark;
 
+    const newBoard = () => board.fill('');
 
-    return { addMark, getBoard }
+    return {
+        addMark,
+        getBoard,
+        newBoard
+    }
 })();
 
 const gameController = (() => {
+    const playerFactory = (mark) => {
+        return { mark };
+    }
 
-    // Define an array with all possible winning combinations
+    const playerX = playerFactory('X');
+    const playerO = playerFactory('O');
+    const board = gameBoard.getBoard();
     const winCombos = [
-        // Row combinations
         [0, 1, 2],
         [3, 4, 5],
         [6, 7, 8],
-        // Column combinations
         [0, 3, 6],
         [1, 4, 7],
         [2, 5, 8],
-        // Diagonal combinations
         [0, 4, 8],
         [2, 4, 6]
     ];
 
-    let winner = null;
+    let winner;
+    let activePlayer;
 
-    const playerX = playerFactory('X');
-    const playerO = playerFactory('O');
-
-    let activePlayer = playerX;
+    const newGame = () => {
+        winner = null;
+        activePlayer = playerX;
+    }
 
     const switchPlayerTurn = () => {
         activePlayer = activePlayer === playerX ? playerO : playerX;
@@ -49,29 +47,24 @@ const gameController = (() => {
 
     const getActivePlayer = () => activePlayer;
 
-
     const playRound = (n) => {
-
         // Check if cell has a mark before adding the mark
-        if (gameBoard.getBoard()[n] === '') {
+        if (board[n] === '') {
             gameBoard.addMark(n, getActivePlayer().mark);
-
             checkWin();
-
             switchPlayerTurn();
         }
     }
 
     const checkWin = () => {
-        const board = gameBoard.getBoard();
-
-        // Map the gameboard to the possible winning combinations
-        // Check if any of the new mapped arrays are all the same
-
+        // If all cells are full, set winner to draw
+        // (there is probably a more elegant way to do this)
         if (board.every(value => value !== '')) {
             winner = 'Draw';
         }
 
+        // Map the gameboard to the possible winning combinations
+        // Check if any of the new mapped arrays contain only X's or O's
         for (let i = 0; i < winCombos.length; i++) {
             let checkWinArr = winCombos[i].map(index => board[index]);
             if (checkWinArr.every(value => value === 'X')) {
@@ -84,24 +77,27 @@ const gameController = (() => {
 
     const getWinner = () => winner;
 
-    return { playRound, getActivePlayer, getWinner }
-
+    return {
+        playRound,
+        getActivePlayer,
+        getWinner,
+        newGame
+    }
 })();
 
 const displayController = (() => {
-    const playerTurnDiv = document.querySelector('.turn');
+    const messageDiv = document.querySelector('.message');
     const boardDiv = document.querySelector('.board');
+    const newGameBtn = document.querySelector('.new-game');
 
     const updateScreen = () => {
-        // Clear the board
         boardDiv.textContent = '';
-
         const board = gameBoard.getBoard();
         const activePlayer = gameController.getActivePlayer();
+        messageDiv.textContent = `${activePlayer.mark}'s turn`;
 
-        playerTurnDiv.textContent = `${activePlayer.mark}'s turn`;
-
-        // Create buttons for each cell of the board;
+        // Create buttons for each cell of the board
+        // Assign each button a data item with a unique index
         let indexCounter = 0;
         board.forEach(cell => {
             const btn = document.createElement('button');
@@ -123,14 +119,28 @@ const displayController = (() => {
 
         if (winner) {
             winner === 'Draw' ?
-                playerTurnDiv.textContent = 'It\'s a draw!' :
-                playerTurnDiv.textContent = `${winner.mark} wins!`;
+                messageDiv.textContent = 'It\'s a draw!' :
+                messageDiv.textContent = `${winner.mark} wins!`;
+            boardDiv.removeEventListener('click', clickHandler);
         }
     }
 
-    boardDiv.addEventListener('click', clickHandler);
+    const newGame = () => {
+        newGameBtn.classList.add('clicked');
+        setTimeout(() => { newGameBtn.classList.remove('clicked') }, 100);
 
-    return { updateScreen }
+        // this.style.boxShadow = '0px 0px 5px #666666';
+        // setTimeout(() => { this.style.boxShadow = '' }, 100);
+
+        gameBoard.newBoard();
+        gameController.newGame();
+        boardDiv.addEventListener('click', clickHandler);
+        updateScreen();
+    }
+
+    newGameBtn.addEventListener('click', newGame);
+
+    return { newGame }
 })();
 
-displayController.updateScreen();
+displayController.newGame();
