@@ -4,27 +4,15 @@ const playerFactory = (mark) => {
 
 const gameBoard = (() => {
 
-    // Create a 2d array representing the game board
-    const board = [];
-    for (let i = 0; i < 9; i++) {
-        board[i] = [];
-        for (let j = 0; j < 3; j++) {
-            board[i].push('');
-        }
-    }
+    // Create an array representing the game board
+    const board = Array(9).fill('');
 
     const getBoard = () => board;
 
     // Create a function that takes a cell number and player name
     // and places a mark in the chosen cell
     const addMark = (cell, mark) => {
-
-        // Do some math to get the position of the cell in the board
-        const row = Math.floor(cell / 3);
-        const column = cell % 3;
-
-        // If chosen cell is not empty, add mark to cell
-        board[row][column] = mark;
+        board[cell] = mark;
     };
 
 
@@ -65,7 +53,7 @@ const gameController = (() => {
     const playRound = (n) => {
 
         // Check if cell has a mark before adding the mark
-        if (gameBoard.getBoard().flat()[n] === '') {
+        if (gameBoard.getBoard()[n] === '') {
             gameBoard.addMark(n, getActivePlayer().mark);
 
             checkWin();
@@ -76,18 +64,16 @@ const gameController = (() => {
 
     const checkWin = () => {
         const board = gameBoard.getBoard();
-        // Flatten the board into a one-dimensional array
-        const flatBoard = board.flat();
 
         // Map the gameboard to the possible winning combinations
         // Check if any of the new mapped arrays are all the same
 
-        if (flatBoard.every(value => value !== '')) {
+        if (board.every(value => value !== '')) {
             winner = 'Draw';
         }
 
         for (let i = 0; i < winCombos.length; i++) {
-            let checkWinArr = winCombos[i].map(index => flatBoard[index]);
+            let checkWinArr = winCombos[i].map(index => board[index]);
             if (checkWinArr.every(value => value === 'X')) {
                 winner = playerX;
             } else if (checkWinArr.every(value => value === 'O')) {
@@ -117,15 +103,13 @@ const displayController = (() => {
 
         // Create buttons for each cell of the board;
         let indexCounter = 0;
-        board.forEach(row => {
-            row.forEach(cell => {
-                const btn = document.createElement('button');
-                btn.classList.add('cell');
-                btn.dataset.index = indexCounter;
-                btn.textContent = cell;
-                boardDiv.appendChild(btn);
-                indexCounter++;
-            })
+        board.forEach(cell => {
+            const btn = document.createElement('button');
+            btn.classList.add('cell');
+            btn.dataset.index = indexCounter;
+            btn.textContent = cell;
+            boardDiv.appendChild(btn);
+            indexCounter++;
         });
     }
 
